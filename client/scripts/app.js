@@ -1,13 +1,15 @@
 // YOUR CODE HERE:
 var app = {};
-app.server = 'https://api.parse.com/1/classes/chatterbox';
+app.server = 'https://api.parse.com/1/classes/chatterbox?limit=300';
 
 app.messages = [];
 app.rooms = [];
 app.friends = [];
 app.username = '';
+app.currentRoom = '';
 
 app.init = function () {
+  setInterval(app.fetch, 2000);
 };
 
 $(document).on("click", ".username", function () {
@@ -17,6 +19,7 @@ $(document).on("click", ".username", function () {
 
 $(document).on("click", "#submit", function () {
   var newMessage = $('#message').val();
+  $('#message').val('');
   app.handleSubmit(newMessage);
 });
 
@@ -39,10 +42,11 @@ app.fetch = function () {
   $.ajax({
     url: app.server,
     type: 'GET',
-    data: {"order": "-createdAt"},
+    data: {"order": "-createdAt",},
     contentType: 'application/json',
     success: function (data) {
-      console.log(data);
+      app.currentRoom = app.escape($('#roomSelect option:selected').text());
+      console.log(app.currentRoom);
       app.getMessages(data);
     },
     error: function (data) {
@@ -53,31 +57,48 @@ app.fetch = function () {
 
 app.getMessages = function(data){
   app.messages = data.results.filter(function(message,i,a){return !!message.username && !!message.text && !!message.roomname;});
+  app.messages.forEach(function(message){
+                message.username = app.escape(message.username);
+                message.text = app.escape(message.text);
+                message.roomname = app.escape(message.roomname);
+             });
+  
   app.rooms = app.messages.map(function(message){return message.roomname;})
                           .filter(function(room,index,arr){return arr.indexOf(room) === index;});
   
   $('#roomSelect').empty();                        
   app.rooms.forEach(function(room){
+
     var $node = '<option value=' + '"' + room + '">' + room + '</option>';
+    //if(room === app.currentRoom){console.log(app.currentRoom);}
     $('#roomSelect').append($node);
+    $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected'); 
   });
+  
+  var $newRoom = '<option value=newRoom">Add new room...</option>';
+  $('#roomSelect').append($newRoom);
   app.updateRoom();
 };
 
 app.updateRoom = function(){
-  var curRoom = $('#roomSelect option:selected').text();  
+  if ($('#roomSelect option:selected').text() === "Add new room..."){
+    if($('#newRoom').length === 0){
+      $newRoom = '<input id="newRoom" type="text" placeholder="Name your room"></input>';
+      $('#inputs').prepend($newRoom);
+    }
+    $('#newRoom').focus();
+  }
+
+
+  app.currentRoom = $('#roomSelect option:selected').text();  
   app.clearMessages();
-  //console.log(app.messages);
-  app.messages.filter(function (v, i, a) {return v.roomname === curRoom;})
+  app.messages.filter(function (message, i, a) {return message.roomname === app.currentRoom;})
               .forEach(function (message) {app.addMessage(message);});
 };
-
-app.fetch();
 
 app.clearMessages = function() {
   $('#chats').empty();
 };
-
 
 app.escape = function(string){
   string  = string.replace(/\&/g, function (v) {
@@ -97,12 +118,12 @@ app.escape = function(string){
 };
 
 app.addMessage = function(message) {
-  var $user = $('<div class="username">' + app.escape(message.username) + '</div>');
-  var $message = $('<div class="'+ app.escape(message.username) + '">' + app.escape(message.text) + '</div>');
-  if(app.friends.indexOf(app.escape(message.username)) !== -1){
+  var $user = $('<div class="username">' + message.username + '</div>');
+  var $message = $('<div class="'+ message.username + '">' + message.text + '</div>');
+  if(app.friends.indexOf(message.username) !== -1){
     $message.addClass('friend');
   }
-  var $node = $('<div class="chat" data-username=' + '"' + app.escape(message.username) + '" data-room="' + app.escape(message.roomname) + '"></div>');
+  var $node = $('<div class="chat" data-username=' + '"' + message.username + '" data-room="' + message.roomname + '"></div>');
   $node.append($user).append($message);
   $node.appendTo('#chats');
 };
@@ -143,3 +164,5 @@ app.handleSubmit = function(message){
 //   text: 'trololo',
 //   roomname: '4chan'
 // };
+
+app.init();
