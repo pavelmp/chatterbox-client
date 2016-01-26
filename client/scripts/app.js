@@ -4,10 +4,25 @@ app.server = 'https://api.parse.com/1/classes/chatterbox';
 
 app.messages = [];
 app.rooms = [];
+app.friends = [];
 
 app.init = function () {
 
 };
+
+$(document).on("click", ".username", function () {
+  var friend = $(this).text();
+  console.log(friend);
+  if($('.' + friend).hasClass("friend")){
+    app.friends.splice(app.friends.indexOf(friend),1);
+    $('.' + friend).removeClass("friend");
+  } else {
+    if(app.friends.indexOf(friend) === -1){
+      app.friends.push(friend);
+    }
+    $('.' + friend).addClass("friend");
+  }    
+});
 
 app.send = function (message) {
   $.ajax({
@@ -82,8 +97,11 @@ app.escape = function(string){
 };
 
 app.addMessage = function(message) {
-  var $user = $('<div class="username">' + app.escape(message.username) + ':</div>');
-  var $message = $('<div>' + app.escape(message.text) + '</div>');
+  var $user = $('<div class="username">' + app.escape(message.username) + '</div>');
+  var $message = $('<div class="'+ app.escape(message.username) + '">' + app.escape(message.text) + '</div>');
+  if(app.friends.indexOf(app.escape(message.username)) !== -1){
+    $message.addClass('friend');
+  }
   var $node = $('<div class="chat" data-username=' + '"' + app.escape(message.username) + '" data-room="' + app.escape(message.roomname) + '"></div>');
   $node.append($user).append($message);
   $node.appendTo('#chats');
@@ -95,6 +113,7 @@ app.addRoom = function(room) {
 };
 
 app.addFriend = function(friend){
+
 };
 
 app.handleSubmit = function(){
