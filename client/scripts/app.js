@@ -70,7 +70,6 @@ app.getMessages = function(data){
   app.rooms.forEach(function(room){
 
     var $node = '<option value=' + '"' + room + '">' + room + '</option>';
-    //if(room === app.currentRoom){console.log(app.currentRoom);}
     $('#roomSelect').append($node);
     $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected'); 
   });
@@ -88,7 +87,6 @@ app.updateRoom = function(){
     }
     $('#newRoom').focus();
   }
-
 
   app.currentRoom = $('#roomSelect option:selected').text();  
   app.clearMessages();
@@ -152,10 +150,17 @@ app.getUserName = function(){
 
 
 app.handleSubmit = function(message){
+  var room = $('#roomSelect option:selected').text();
+  if($('#newRoom').length !== 0){
+    room = $('#newRoom').val();
+    $('#newRoom').remove();
+    app.currentRoom = room;  ///<<--------fix heres
+    $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected');
+  }
   var messageObj = {
     username: app.getUserName(),
     text: message,
-    roomname: $('#roomSelect option:selected').text()
+    roomname: room
   };
   app.send(messageObj);
 };
