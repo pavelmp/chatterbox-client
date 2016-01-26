@@ -18,9 +18,13 @@
       <h1>chatterbox</h1>
       <!-- Your HTML goes here! -->
       <span>Room:</span>
-      <select id="roomSelect">
-        
+      <select id="roomSelect" onchange="app.updateRoom()">
+
       </select>
+      <form>
+        <input id="message" type="text" placeholder="add your shit here"></input>
+        <button id="submit" type="button">Submit</button> 
+      </form>
     </div>
     <div id="chats"></div>
   </body>
