@@ -82,7 +82,10 @@ app.escape = function(string){
 };
 
 app.addMessage = function(message) {
-  var $node = $('<div class="chat" data-username=' + '"' + app.escape(message.username) + '" data-room="' + app.escape(message.roomname) + '">' + app.escape(message.username) + ': ' + app.escape(message.text) + '</div>');
+  var $user = $('<div class="username">' + app.escape(message.username) + ':</div>');
+  var $message = $('<div>' + app.escape(message.text) + '</div>');
+  var $node = $('<div class="chat" data-username=' + '"' + app.escape(message.username) + '" data-room="' + app.escape(message.roomname) + '"></div>');
+  $node.append($user).append($message);
   $node.appendTo('#chats');
 };
 
