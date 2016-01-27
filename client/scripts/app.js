@@ -45,8 +45,8 @@ app.fetch = function () {
     data: {"order": "-createdAt",},
     contentType: 'application/json',
     success: function (data) {
-      app.currentRoom = app.escape($('#roomSelect option:selected').text());
-      console.log(app.currentRoom);
+      app.currentRoom = $('#roomSelect option:selected').text();
+      //console.log(data);
       app.getMessages(data);
     },
     error: function (data) {
@@ -56,20 +56,15 @@ app.fetch = function () {
 };
 
 app.getMessages = function(data){
-  app.messages = data.results.filter(function(message,i,a){return !!message.username && !!message.text && !!message.roomname;});
-  app.messages.forEach(function(message){
-                message.username = app.escape(message.username);
-                message.text = app.escape(message.text);
-                message.roomname = app.escape(message.roomname);
-             });
-  
+  console.log(data.results);
+  app.messages = data.results.filter(function(message,i,a){return (!!message.username || !!message.text) && !!message.roomname;});
   app.rooms = app.messages.map(function(message){return message.roomname;})
                           .filter(function(room,index,arr){return arr.indexOf(room) === index;});
   
+  
   $('#roomSelect').empty();                        
   app.rooms.forEach(function(room){
-
-    var $node = '<option value=' + '"' + room + '">' + room + '</option>';
+    var $node = $('<option/>').val(room).text(room);
     $('#roomSelect').append($node);
     $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected'); 
   });
@@ -98,23 +93,6 @@ app.clearMessages = function() {
   $('#chats').empty();
 };
 
-app.escape = function(string){
-  string  = string.replace(/\&/g, function (v) {
-    return '&amp';
-  }).replace(/\</g, function (v) {
-    return '&lt';
-  }).replace(/\>/g, function (v) {
-    return '&gt';
-  }).replace(/\"/g, function (v) {
-    return '&quot';
-  }).replace(/\'/g, function (v) {
-    return '&#x27';
-  }).replace(/\//g, function (v) {
-    return '&#x2F';
-  });
-  return string;
-};
-
 app.addMessage = function(message) {
   var $user = $('<div class="username">' + message.username + '</div>');
   var $message = $('<div class="'+ message.username + '">' + message.text + '</div>');
@@ -127,7 +105,7 @@ app.addMessage = function(message) {
 };
 
 app.addRoom = function(room) {
-  var $node = $('<option value=' + '"' + room + '">' + room + '</option>');
+  var $node = $('<option/>').val(roomname).txt(roomname);
   $('#roomSelect').append($node);
 };
 
@@ -155,7 +133,10 @@ app.handleSubmit = function(message){
     room = $('#newRoom').val();
     $('#newRoom').remove();
     app.currentRoom = room;  ///<<--------fix heres
+    
     $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected');
+
+    //$('#roomSelect').select('<option/>').attr('value',app.currentRoom).attr('selected', 'selected');
   }
   var messageObj = {
     username: app.getUserName(),
