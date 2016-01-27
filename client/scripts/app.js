@@ -4,7 +4,7 @@ app.server = 'https://api.parse.com/1/classes/chatterbox?limit=300';
 
 app.messages = [];
 app.rooms = [];
-app.friends = [];
+app.friends = {};
 app.username = '';
 app.currentRoom = '';
 
@@ -17,7 +17,9 @@ $(document).on("click", ".username", function () {
   app.addFriend(friend);
 });
 
-$(document).on("click", "#submit", function () {
+$(document).on("submit", "#send", function (event) {
+  event.preventDefault();
+
   var newMessage = $('#message').val();
   $('#message').val('');
   app.handleSubmit(newMessage);
@@ -56,11 +58,13 @@ app.fetch = function () {
 };
 
 app.getMessages = function(data){
-  console.log(data.results);
+  //console.log(data.results);
   app.messages = data.results.filter(function(message,i,a){return (!!message.username || !!message.text) && !!message.roomname;});
-  app.rooms = app.messages.map(function(message){return message.roomname;})
+  app.rooms = app.messages.map(function(message){ 
+                          if((message.roomname.length < 20 && message.roomname.replace(/\s/g, '').length !== 0) && message.roomname !== undefined){
+                            return message.roomname; }})
                           .filter(function(room,index,arr){return arr.indexOf(room) === index;});
-  
+  //console.log(app.rooms);
   
   $('#roomSelect').empty();                        
   app.rooms.forEach(function(room){
@@ -77,8 +81,8 @@ app.getMessages = function(data){
 app.updateRoom = function(){
   if ($('#roomSelect option:selected').text() === "Add new room..."){
     if($('#newRoom').length === 0){
-      $newRoom = '<input id="newRoom" type="text" placeholder="Name your room"></input>';
-      $('#inputs').prepend($newRoom);
+      var $newRoom = '<input id="newRoom" type="text" placeholder="Name your room"></input>';
+      $('#send').prepend($newRoom);
     }
     $('#newRoom').focus();
   }
@@ -94,36 +98,35 @@ app.clearMessages = function() {
 };
 
 app.addMessage = function(message) {
-  var $user = $('<div class="username">' + message.username + '</div>');
-  var $message = $('<div class="'+ message.username + '">' + message.text + '</div>');
-  if(app.friends.indexOf(message.username) !== -1){
+  var $user = $('<div/>').addClass('username').text(message.username);
+  var $message = $('<div/>').addClass(message.username).text(message.text);
+  if(app.friends[message.username]){
     $message.addClass('friend');
   }
-  var $node = $('<div class="chat" data-username=' + '"' + message.username + '" data-room="' + message.roomname + '"></div>');
+  var $node = $('<div/>').addClass('chat');
   $node.append($user).append($message);
   $node.appendTo('#chats');
 };
 
 app.addRoom = function(room) {
-  var $node = $('<option/>').val(roomname).txt(roomname);
+  var $node = $('<option/>').val(room).text(room);
   $('#roomSelect').append($node);
 };
 
 app.addFriend = function(friend){
   if($('.' + friend).hasClass("friend")){
-    app.friends.splice(app.friends.indexOf(friend),1);
+    app.friends[friend].delete();
     $('.' + friend).removeClass("friend");
   } else {
-    if(app.friends.indexOf(friend) === -1){
-      app.friends.push(friend);
+    if(!app.friends[friend]){
+      app.friends[friend] = true;
     }
     $('.' + friend).addClass("friend");
   }   
 };
 
 app.getUserName = function(){
-  var results = new RegExp('[\?&]username=([^&#]*)').exec(window.location.href);
-  return results[1] || 0;  
+  return window.location.search.substr(10);
 };
 
 
@@ -134,9 +137,10 @@ app.handleSubmit = function(message){
     $('#newRoom').remove();
     app.currentRoom = room;  ///<<--------fix heres
     
-    $("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected');
-
-    //$('#roomSelect').select('<option/>').attr('value',app.currentRoom).attr('selected', 'selected');
+    //$("#roomSelect option[value='"+ app.currentRoom +"']").attr('selected', 'selected');
+    
+    //$('#roomSelect').
+    //select('<option/>').val(app.currentRoom).attr('selected', 'selected');
   }
   var messageObj = {
     username: app.getUserName(),
@@ -145,6 +149,7 @@ app.handleSubmit = function(message){
   };
   app.send(messageObj);
 };
+
 // var message = {
 //   username: 'shawndrost',
 //   text: 'trololo',
